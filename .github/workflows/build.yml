@@ -47,7 +47,8 @@ jobs:
       - name: verify APK
         run: |
           set -eu
-          APK=dsh-mobile/app/build/outputs/apk/release/app-release.apk
+          APK=$(find dsh-mobile/app/build/outputs/apk/release -maxdepth 1 -name "*.apk" -print -quit)
+          echo "APK=$APK"
           "$ANDROID_HOME/build-tools/34.0.0/aapt2" dump badging "$APK" > build-badging.txt
           sed -n '1,6p' build-badging.txt
           "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --print-certs "$APK" > build-signature.txt
@@ -125,7 +126,8 @@ jobs:
         if: always()
         run: |
           set -eu
-          APK=dsh-android/app/build/outputs/apk/release/dsh-local-release.apk
+          APK=$(find dsh-android/app/build/outputs/apk/release -maxdepth 1 -name "*.apk" -print -quit)
+          echo "APK=$APK"
           if [ -f "$APK" ]; then
             "$ANDROID_HOME/build-tools/34.0.0/aapt2" dump badging "$APK" > build-badging.txt
             sed -n '1,6p' build-badging.txt
