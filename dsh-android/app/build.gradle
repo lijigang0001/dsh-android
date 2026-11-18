@@ -52,6 +52,10 @@ android {
     }
 
     lint {
+        // targetSdk 28 is deliberate (Android 10+ blocks exec() from the app's
+        // private directory for API 29+), so `lintVital` would fail the release
+        // build on ExpiredTargetSdkVersion. Play distribution is not a goal here.
+        checkReleaseBuilds false
         abortOnError false
     }
 }
