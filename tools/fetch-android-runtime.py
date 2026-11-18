@@ -16,7 +16,9 @@ import json
 import os
 import re
 import sys
+import shutil
 import tarfile
+import tempfile
 import urllib.request
 
 MIRRORS = [
@@ -128,7 +130,9 @@ def main():
     if len(sys.argv) != 2:
         raise SystemExit(__doc__)
     out = sys.argv[1]
-    work = os.path.join(os.path.dirname(out.rstrip("/\\")) or ".", "_runtime-work")
+    # Scratch space must live outside the payload directory: everything under
+    # <out>/.. is packed into the APK.
+    work = os.environ.get("DSH_RUNTIME_WORK") or tempfile.mkdtemp(prefix="dsh-android-runtime-")
     debs = os.path.join(work, "debs")
     root = os.path.join(work, "root")
     os.makedirs(debs, exist_ok=True)

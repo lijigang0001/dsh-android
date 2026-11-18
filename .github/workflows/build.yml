@@ -9,6 +9,10 @@ concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  ANDROID_HOME: /usr/local/lib/android/sdk
+  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+
 jobs:
   # The WebView shell that talks to a DSH instance running on a computer.
   shell-apk:
@@ -22,14 +26,30 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
-
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
 
+      # GitHub's Linux image ships the SDK, but `android-actions/setup-android`
+      # fails on it (its `sdkmanager tools` package is gone). Install the two
+      # pieces the build actually needs instead.
+      - name: ensure SDK packages
+        run: |
+          set -euo pipefail
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKM" --licenses >/dev/null 2>&1 || true
+          "$SDKM" --install "platforms;android-34" "build-tools;34.0.0" >/dev/null
+          ls "$ANDROID_HOME/platforms" "$ANDROID_HOME/build-tools"
+
       - name: assembleRelease
         run: gradle -p dsh-mobile assembleRelease --no-daemon --console=plain
+
+      - name: verify APK
+        run: |
+          set -euo pipefail
+          APK=dsh-mobile/app/build/outputs/apk/release/app-release.apk
+          "$ANDROID_HOME/build-tools/34.0.0/aapt2" dump badging "$APK" | head -6
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --print-certs "$APK" | head -6
 
       - uses: actions/upload-artifact@v4
         with:
@@ -51,8 +71,6 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
-
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
@@ -64,6 +82,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: ensure SDK packages
+        run: |
+          set -euo pipefail
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKM" --licenses >/dev/null 2>&1 || true
+          "$SDKM" --install "platforms;android-34" "build-tools;34.0.0" >/dev/null
+          ls "$ANDROID_HOME/platforms" "$ANDROID_HOME/build-tools"
 
       - name: fetch aarch64 Node runtime (Termux packages)
         run: python tools/fetch-android-runtime.py dsh-android/payload/runtime
@@ -94,8 +120,17 @@ jobs:
         run: gradle -p dsh-android assembleRelease --no-daemon --console=plain
 
       - name: verify APK
-        shell: pwsh
-        run: ./tools/verify-apk.ps1 -Apk dsh-android/app/build/outputs/apk/release/dsh-local-release.apk
+        if: always()
+        run: |
+          set -euo pipefail
+          APK=dsh-android/app/build/outputs/apk/release/dsh-local-release.apk
+          if [ -f "$APK" ]; then
+            "$ANDROID_HOME/build-tools/34.0.0/aapt2" dump badging "$APK" | head -6
+            "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --print-certs "$APK" | head -6
+            unzip -l "$APK" | tail -5
+          else
+            echo "no APK produced"; exit 1
+          fi
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -103,5 +138,4 @@ jobs:
           name: dsh-local-apk
           path: |
             dsh-android/app/build/outputs/apk/release/*.apk
-            dsh-android/app/build/manual/out/*.apk
           if-no-files-found: warn
