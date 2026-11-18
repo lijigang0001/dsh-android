@@ -46,10 +46,12 @@ jobs:
 
       - name: verify APK
         run: |
-          set -euo pipefail
+          set -eu
           APK=dsh-mobile/app/build/outputs/apk/release/app-release.apk
-          "$ANDROID_HOME/build-tools/34.0.0/aapt2" dump badging "$APK" | head -6
-          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --print-certs "$APK" | head -6
+          "$ANDROID_HOME/build-tools/34.0.0/aapt2" dump badging "$APK" > build-badging.txt
+          sed -n '1,6p' build-badging.txt
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --print-certs "$APK" > build-signature.txt
+          sed -n '1,6p' build-signature.txt
 
       - uses: actions/upload-artifact@v4
         with:
@@ -122,12 +124,16 @@ jobs:
       - name: verify APK
         if: always()
         run: |
-          set -euo pipefail
+          set -eu
           APK=dsh-android/app/build/outputs/apk/release/dsh-local-release.apk
           if [ -f "$APK" ]; then
-            "$ANDROID_HOME/build-tools/34.0.0/aapt2" dump badging "$APK" | head -6
-            "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --print-certs "$APK" | head -6
-            unzip -l "$APK" | tail -5
+            "$ANDROID_HOME/build-tools/34.0.0/aapt2" dump badging "$APK" > build-badging.txt
+            sed -n '1,6p' build-badging.txt
+            "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --print-certs "$APK" > build-signature.txt
+            sed -n '1,6p' build-signature.txt
+            unzip -l "$APK" > build-contents.txt
+            tail -n 6 build-contents.txt
+            ls -lh "$APK"
           else
             echo "no APK produced"; exit 1
           fi
@@ -136,6 +142,7 @@ jobs:
         if: always()
         with:
           name: dsh-local-apk
+          retention-days: 3
           path: |
             dsh-android/app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
