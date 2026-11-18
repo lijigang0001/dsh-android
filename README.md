@@ -130,10 +130,29 @@ WebView 缺的部分（`app/src/main/assets/mobile-shim.{css,js}`）：
 
 ## 五、自己重新编译
 
+### 用 GitHub Actions 构建（推荐，本机环境有问题时的主路径）
+
+仓库：**https://github.com/lijigang0001/dsh-android**（公开仓库，Actions 免费额度才够跑这个 60 分钟的包）
+
+每次 push 到 `main` 会自动跑 [.github/workflows/build.yml](.github/workflows/build.yml)，两个 job：
+
+| job | 产物 | 内容 |
+| --- | --- | --- |
+| `webview shell APK` | `dsh-mobile-shell-apk` | 连电脑那版（70 KB） |
+| `on-device APK (bundled runtime)` | `dsh-local-apk` | 手机上自跑那版（约 158 MB，里面 93 MB 的运行时 + DSH 树） |
+
+下载：仓库 → Actions → 最新一次 run → 底部 Artifacts。
+
+runner 上 SDK 是预装的，`android-actions/setup-android@v3` 在这台 runner 上会失败
+（它的 `sdkmanager tools` 包已经下架），所以 workflow 里直接用
+`$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager` 装 `platforms;android-34` 和
+`build-tools;34.0.0`。
+
 ### 本机：用 SDK 工具直出（已验证可跑通）
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools\build-apk.ps1
+powershell -ExecutionPolicy Bypass -File tools\build-apk.ps1           # 连电脑版
+powershell -ExecutionPolicy Bypass -File tools\build-dsh-android.ps1   # 手机自跑版（需先备好 payload）
 ```
 
 它做的事和 AGP 一样，只是绕开了 `java.exe`：
@@ -145,6 +164,16 @@ powershell -ExecutionPolicy Bypass -File tools\build-apk.ps1
 | 转 dex | `javaw.exe -cp lib\d8.jar com.android.tools.r8.D8` | javaw.exe |
 | 对齐 | `zipalign -p 4` | 原生 exe |
 | 签名 | `javaw.exe -cp lib\apksigner.jar …ApkSignerTool` | javaw.exe |
+
+`dsh-android` 的 payload 这样生成（CI 里是同一套命令）：
+
+```powershell
+python tools\fetch-android-runtime.py dsh-android\payload\runtime   # Termux aarch64 Node + 依赖
+npm install --prefix build\dsh-tree @deepseek-ai\dsh@0.2.2-rc.1
+node tools\collect-runtime-deps.mjs <dump-config> build\dsh-tree\node_modules\@deepseek-ai\dsh build\deps.json
+node tools\build-payload.mjs build\deps.json build\dsh-tree\node_modules\@deepseek-ai\dsh dsh-android\payload\dsh
+python tools\pack-payload.py dsh-android\payload dsh-android\app\src\main\assets\payload.zip
+```
 
 ### 为什么本机不能直接 `./gradlew assembleRelease`
 

@@ -119,3 +119,40 @@ App 首次启动时在私有目录建 symlink（`Os.symlink`，应用沙箱内�
 | 依赖树在 Android 上能加载 | ⬜ 待做（步骤 1） |
 | APK 首启解包 + exec + 自动登录 | ⬜ 待做（步骤 3） |
 | 真机跑通 | ⬜ 需要设备 |
+
+## 四、第二个原生坑：@deepseek-ai/node-addon-system（未解决，下一步）
+
+`require-builtin` 顶掉之后，还有一处会挡启动：
+
+```
+dsh-sandbox-local/lib/index.js:6        import { LAUNCHER_BIN, grantArgs, launcherPath, probe } from "@deepseek-ai/node-addon-system/landlock-run"
+dsh-session-persistence-jsonl/lib/index.js:12  import { tryLockExclusive } from "@deepseek-ai/node-addon-system/flock"
+```
+
+`node-addon-system` 内部按 `@deepseek-ai/node-addon-system-${process.platform}-${process.arch}`
+解析平台包，可选依赖里只有 darwin / linux-gnu / linux-musl / win32 —— **没有 android**。
+Android 上 `process.platform === 'linux'`、`arch === 'arm64'`，会去找
+`node-addon-system-linux-arm64`：即使装上也是 glibc 构建，Bionic dlopen 会失败。
+
+两条出路，倾向第一条：
+
+1. **纯 JS 替换包**：在 payload 里直接覆盖 `@deepseek-ai/node-addon-system`，
+   用同名的 `exports`（`./flock`、`./landlock-run`、`.`）实现：
+   - `flock`：`fs.openSync(path, 'wx')` 锁文件 + 释放；
+   - `landlock-run`：`probe()` 返回"不支持"，让 sandbox 走无 Landlock 分支
+     （Android 内核本来也没有 Landlock 可用）。
+   这样 ESM 静态 import 也会解析到替身，不需要 loader hook。
+2. 用 `module.registerHooks` 拦截 ESM 解析 —— Node 26 支持，但比替换包更脆。
+
+另外 `dsh-terminal`（node-pty）在 Android 上没有 bionic 预编译，profile patch 里
+应当把 `pty` / `terminal-*` 一并禁掉，避免用户点到"终端"面板才炸。
+
+## 五、GitHub Actions 构建状态
+
+仓库：https://github.com/lijigang0001/dsh-android （公开，Actions 存储/分钟数才够）
+
+- `webview shell APK`：绿，产物 70 KB，`aapt2 badging` / `apksigner` 均通过。
+- `on-device APK (bundled runtime)`：绿，产物约 158 MB（含 93 MB payload）。
+  构建链路完整：Termux 运行时抓取 → npm 装 dsh → `--dump-config` 算插件集 →
+  裁剪 → 打包 payload → Gradle 出包 → 校验 → 上传 artifact。
+- 已知 CR：手机上首次启动大概率卡在上面那个 `node-addon-system`，需要第 1 条替身。
