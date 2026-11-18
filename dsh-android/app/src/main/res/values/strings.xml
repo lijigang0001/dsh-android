@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DSH 本机版</string>
+    <string name="prepare_title">正在准备本机运行时</string>
+    <string name="prepare_first">首次启动要解包约 437 MB 运行时（Node 26 + DSH），请保持前台…</string>
+    <string name="prepare_progress">%1$d%%</string>
+    <string name="starting_server">正在启动本机 DSH 服务…</string>
+    <string name="server_ready">服务已就绪</string>
+    <string name="server_failed">服务启动失败</string>
+    <string name="settings">设置</string>
+    <string name="restart_server">重启服务</string>
+    <string name="reinstall_payload">重新解包运行时</string>
+    <string name="show_log">查看日志</string>
+    <string name="copy_address">复制当前地址</string>
+    <string name="copied">已复制</string>
+    <string name="about">DSH 本机版 %1$s\nNode 26.13.1（Android aarch64）跑在手机里，Web UI 由本机进程提供，不连电脑。\n数据目录：%2$s</string>
+    <string name="log_title">服务日志</string>
+    <string name="close">关闭</string>
+    <string name="press_again_to_exit">再按一次退出</string>
+    <string name="saved_to">已保存到下载目录：%1$s</string>
+    <string name="save_failed">保存失败：%1$s</string>
+    <string name="generating_file">页面正在生成文件…</string>
+    <string name="clipboard_empty">剪贴板是空的</string>
+    <string name="tls_failed">TLS 证书校验失败：%1$d</string>
+    <string name="permission_denied">权限被拒绝，语音或相机功能不可用</string>
+    <string name="no_file_picker">没有可用的文件选择器：%1$s</string>
+</resources>

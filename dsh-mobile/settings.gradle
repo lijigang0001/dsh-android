@@ -1,0 +1,23 @@
+pluginManagement {
+    repositories {
+        // Mirrors first: this machine reaches Aliyun but not dl.google.com.
+        maven { url = 'https://maven.aliyun.com/repository/gradle-plugin' }
+        maven { url = 'https://maven.aliyun.com/repository/google' }
+        maven { url = 'https://maven.aliyun.com/repository/central' }
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        maven { url = 'https://maven.aliyun.com/repository/google' }
+        maven { url = 'https://maven.aliyun.com/repository/central' }
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'dsh-mobile'
+include ':app'

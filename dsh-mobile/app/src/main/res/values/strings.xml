@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DSH 手机版</string>
+    <string name="setup_title">连接你的 DSH</string>
+    <string name="setup_body">1. 电脑上启动服务：dsh --profile web --host 192.168.x.x\n2. 复制终端打印的带 token 的链接\n3. 粘贴到下面，点「连接」</string>
+    <string name="setup_placeholder">http://192.168.1.5:3080/?token=…</string>
+    <string name="connect">连接</string>
+    <string name="paste">粘贴</string>
+    <string name="settings">设置</string>
+    <string name="reload">重新加载</string>
+    <string name="reauthorize">重新登录（清除 Cookie）</string>
+    <string name="desktop_mode">桌面模式（宽视口）</string>
+    <string name="keep_awake">保持屏幕常亮</string>
+    <string name="change_address">修改地址</string>
+    <string name="error_title">连接失败</string>
+    <string name="retry">重试</string>
+    <string name="auth_expired">登录令牌已失效或未提供。\n请在电脑上重新执行 dsh web，然后把新链接粘贴进来。</string>
+    <string name="saved_to">已保存到下载目录：%1$s</string>
+    <string name="save_failed">保存失败：%1$s</string>
+    <string name="clipboard_hint">粘贴剪贴板里的链接</string>
+    <string name="clipboard_empty">剪贴板是空的</string>
+    <string name="url_invalid">链接看起来不对，需要以 http:// 或 https:// 开头</string>
+    <string name="cannot_open">无法打开：%1$s</string>
+    <string name="no_file_picker">没有可用的文件选择器：%1$s</string>
+    <string name="generating_file">页面正在生成文件…</string>
+    <string name="tls_failed">TLS 证书校验失败：%1$d</string>
+    <string name="permission_denied">权限被拒绝，语音或相机功能不可用</string>
+    <string name="press_again_to_exit">再按一次退出</string>
+    <string name="about">DSH 手机版 %1$s\n用 WebView 承载电脑上运行的 DeepSeek Harness 网页界面。</string>
+    <string name="copy_link">复制当前地址</string>
+    <string name="copied">已复制到剪贴板</string>
+    <string name="pasted">已粘贴</string>
+</resources>

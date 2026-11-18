@@ -1,0 +1,107 @@
+name: build-apk
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The WebView shell that talks to a DSH instance running on a computer.
+  shell-apk:
+    name: webview shell APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: assembleRelease
+        run: gradle -p dsh-mobile assembleRelease --no-daemon --console=plain
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dsh-mobile-shell-apk
+          path: dsh-mobile/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+  # The self-contained build: Android aarch64 Node runtime + pruned DSH tree are
+  # baked into the APK, so the phone runs DSH without a computer.
+  local-apk:
+    name: on-device APK (bundled runtime)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: fetch aarch64 Node runtime (Termux packages)
+        run: python tools/fetch-android-runtime.py dsh-android/payload/runtime
+
+      - name: install DSH tree
+        run: npm install --prefix build/dsh-tree @deepseek-ai/dsh@0.2.2-rc.1 --no-audit --no-fund --loglevel=error
+
+      - name: compose profile and prune payload
+        run: |
+          set -euo pipefail
+          DSH_TREE="$PWD/build/dsh-tree/node_modules/@deepseek-ai/dsh"
+          export DSH_HOME="$PWD/build/home"
+          node "$DSH_TREE/lib/bin.js" --profile web --dump-config > build/dump-config.txt
+          node tools/collect-runtime-deps.mjs build/dump-config.txt "$DSH_TREE" build/deps.json
+          node tools/build-payload.mjs build/deps.json "$DSH_TREE" dsh-android/payload/dsh
+
+      - name: stage shim and profile seed
+        run: |
+          set -euo pipefail
+          mkdir -p dsh-android/payload/tools dsh-android/payload/profile
+          cp tools/android-native-addon-shim.cjs tools/android-addon-preload.cjs dsh-android/payload/tools/
+          cp -r build/home/profiles dsh-android/payload/profile/
+
+      - name: pack payload archive
+        run: python tools/pack-payload.py dsh-android/payload dsh-android/app/src/main/assets/payload.zip
+
+      - name: assembleRelease
+        run: gradle -p dsh-android assembleRelease --no-daemon --console=plain
+
+      - name: verify APK
+        shell: pwsh
+        run: ./tools/verify-apk.ps1 -Apk dsh-android/app/build/outputs/apk/release/dsh-local-release.apk
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dsh-local-apk
+          path: |
+            dsh-android/app/build/outputs/apk/release/*.apk
+            dsh-android/app/build/manual/out/*.apk
+          if-no-files-found: warn

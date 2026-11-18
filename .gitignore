@@ -1,0 +1,25 @@
+# Build outputs
+dsh-mobile/app/build/
+dsh-mobile/build/
+dsh-mobile/.gradle/
+dsh-android/app/build/
+dsh-android/build/
+dsh-android/.gradle/
+
+# Generated Android payload: rebuilt from Termux packages + the npm install by
+# tools/fetch-android-runtime.py, tools/build-payload.mjs and tools/pack-payload.py
+dsh-android/payload/
+dsh-android/app/src/main/assets/payload.zip
+captures/
+
+# Machine-local probe homes and credentials
+.dsh-probe*/
+.dsh-local*/
+**/local.properties
+**/.gh_token
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+*.log
+__pycache__/

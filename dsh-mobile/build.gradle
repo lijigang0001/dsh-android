@@ -1,0 +1,5 @@
+// Root build script: one application module, no third-party dependencies, so the
+// APK builds offline against an already-warmed Gradle cache.
+plugins {
+    id 'com.android.application' version '8.5.2' apply false
+}

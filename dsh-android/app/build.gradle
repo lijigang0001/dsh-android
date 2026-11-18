@@ -1,0 +1,57 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.deepseek.dshlocal'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.deepseek.dshlocal'
+        // 28 is deliberate: Android 10+ refuses to exec() binaries written into
+        // the app's private directory for apps targeting 29 or newer, and this
+        // app runs a bundled Node runtime from its filesDir.
+        minSdk 24
+        targetSdk 28
+        versionCode 1
+        versionName '1.0.0'
+    }
+
+    signingConfigs {
+        release {
+            storeFile file('keystore/dsh-local.jks')
+            storePassword 'dshmobile'
+            keyAlias 'dsh-mobile'
+            keyPassword 'dshmobile'
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    // The 93 MB payload archive must stay uncompressed in the APK: aapt2 would
+    // otherwise re-deflate an already deflated archive and buy nothing.
+    androidResources {
+        noCompress 'zip'
+    }
+
+    lint {
+        abortOnError false
+    }
+}

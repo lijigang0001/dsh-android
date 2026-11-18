@@ -1,0 +1,51 @@
+/*
+ * DSH Mobile — WebView shim stylesheet.
+ *
+ * The DSH web UI is already responsive (its layout switches the sidebar to an
+ * overlay drawer below 768 CSS px), so this sheet only adds the pieces a
+ * WebView needs and a desktop browser does not:
+ *   - no rubber-band / pull-to-refresh overscroll;
+ *   - no double-tap zoom delay or grey tap flash;
+ *   - no text autosizing that would fight the app's own type scale;
+ *   - overlay scrollbars instead of desktop gutters.
+ * It deliberately targets classes only through the html.dsh-mobile hook so a
+ * frontend hash change cannot break it.
+ */
+
+html.dsh-mobile {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+html.dsh-mobile body {
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html.dsh-mobile ::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+html.dsh-mobile ::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+/* Keep the layout glued to the visible viewport when the keyboard opens, so the
+   composer's bottom edge never ends up underneath the IME. */
+@supports (height: 100dvh) {
+  html.dsh-mobile,
+  html.dsh-mobile body,
+  html.dsh-mobile #root {
+    height: 100dvh;
+  }
+}
+
+/* A long press on a chat message should select text, not pop the Android
+   "open with" sheet for links the UI renders as plain text. */
+html.dsh-mobile a,
+html.dsh-mobile img {
+  -webkit-touch-callout: default;
+}

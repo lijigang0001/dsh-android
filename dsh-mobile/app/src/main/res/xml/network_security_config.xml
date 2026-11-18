@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The app talks to a DSH instance on the local network over plain HTTP
+  (http://192.168.x.x:3080/?token=...), so cleartext must be permitted.
+  Traffic never leaves the LAN unless the operator points the app at a
+  TLS-fronted address, in which case the system trust anchors apply.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

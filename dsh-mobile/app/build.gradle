@@ -1,0 +1,53 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.deepseek.dshmobile'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.deepseek.dshmobile'
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName '1.0.0'
+        resConfigs 'zh', 'en'
+    }
+
+    signingConfigs {
+        release {
+            storeFile file('keystore/dsh-mobile.jks')
+            storePassword 'dshmobile'
+            keyAlias 'dsh-mobile'
+            keyPassword 'dshmobile'
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+            signingConfig signingConfigs.release
+        }
+        debug {
+            applicationIdSuffix '.debug'
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    lint {
+        abortOnError false
+    }
+}
